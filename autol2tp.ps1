@@ -16,13 +16,13 @@ $SRVaddressL2TPS = "my2.domain.com"
 # DNS суффикс
 $dnssuf = "corp.exd.ru"
 
-# ключ l2tp
+# Ключ l2tp
 $l2tp_key = "ключ"
 
-# метод аутентификации
+# Метод аутентификации
 $auth_method = "MSChapv2"
 
-# --- Proverka admin-prav ---
+# Проверка прав администратора
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole] "Administrator"))
 {
@@ -33,11 +33,16 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     [System.Diagnostics.Process]::Start($psi) | Out-Null
     exit
 }
-
+# Удаление старого подключения, если оно существует
 if (Get-VpnConnection -Name $VPNconnectionL2TPM -AllUserConnection -ErrorAction Ignore -Verbose)
 { Remove-VpnConnection -Name $VPNconnectionL2TPM -AllUserConnection -ErrorAction Ignore -Verbose -Force }
 
+# Создание нового подключения L2TP с предустановленным ключом
 Add-VpnConnection -Name $VPNconnectionL2TPM -ServerAddress $SRVaddressL2TPM -TunnelType $VPNtypeL2TP -AuthenticationMethod $auth_method -L2tpPsk $l2tp_key -EncryptionLevel "Optional" -DnsSuffix $dnssuf  -SplitTunneling -IdleDisconnectSeconds 900 -RememberCredential -AllUserConnection
+
+# Подключение к VPN, используя указанные имя пользователя и пароль
 rasdial $VPNconnectionL2TPM $VPNuser $VPNpass
+
+# Отключение от VPN
 rasdial $VPNconnectionL2TPM /disconnect
 Pause
